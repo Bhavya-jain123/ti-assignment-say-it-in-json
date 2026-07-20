@@ -1,0 +1,28 @@
+# Globex — multi-environment pipeline
+
+@include ../../_base/defaults.pfcfg
+@include ../../environments/ci-shared.pfcfg
+
+@ifdef PRODUCTION
+@include ../../environments/on-prem.pfcfg
+@endif
+
+@ifndef PRODUCTION
+@include overrides.pfcfg
+@endif
+
+[customer]
+id = globex
+tier = standard
+
+[build]
+steps = compile,test,package
+language = go
+go_version = $(toolchain.go.version)
+
+[package]
+format = tar.gz
+output_dir = dist/
+
+[deploy]
+target = ${GLOBEX_ENV:-development}

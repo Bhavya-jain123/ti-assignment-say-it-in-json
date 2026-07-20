@@ -1,0 +1,20 @@
+# On-premises deployment overlay (Globex production)
+
+[deploy]
+strategy = manual
+requires_approval = true
+target = on-prem
+
+[container]
+registry = registry.globex.internal
+push = false
+
+[build]
+image = pfci/builder:enterprise-rhel8
+
+[notify]
+on_success = email
+on_failure = email,pager
+
+[notify.email]
+recipients = sre@globex.example.invalid,release@globex.example.invalid

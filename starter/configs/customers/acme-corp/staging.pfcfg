@@ -1,0 +1,19 @@
+# Acme Corp — staging-only overrides (included by pipeline.pfcfg)
+
+[staging]
+enabled = true
+url = https://staging.acme.example.invalid
+
+[deploy]
+strategy = blue-green
+target = staging
+
+[notify]
+on_success = slack
+on_failure = slack,email
+
+[notify.slack]
+channel = #acme-builds
+
+[cache]
+key_prefix = acme-staging-

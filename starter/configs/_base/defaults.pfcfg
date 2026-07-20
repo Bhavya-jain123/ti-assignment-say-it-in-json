@@ -1,0 +1,21 @@
+# PipelineForge base defaults — included by most customer configs
+@include_once toolchains.pfcfg
+@include_once notifications.pfcfg
+
+[meta]
+format_version = 3
+platform = pipelineforge
+
+[build]
+timeout_minutes = 45
+retry_count = 1
+image = ${PF_BUILD_IMAGE:-pfci/builder:22.04}
+parallel = false
+
+[cache]
+enabled = true
+key_prefix = ${CI:+ci-}${CACHE_NAMESPACE:-default}
+
+[artifacts]
+retention_days = 14
+compress = true

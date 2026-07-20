@@ -1,0 +1,24 @@
+# Node.js build template
+
+@include ../_base/defaults.pfcfg
+
+[template]
+name = node-build
+language = node
+
+[build]
+steps = install,lint,test,build
+install_cmd = $(toolchain.node.install_cmd)
+node_version = $(toolchain.node.version)
+
+[build.env]
+NODE_ENV = ${NODE_ENV:-test}
+CI = ${CI:-false}
+
+[test]
+runner = ${TEST_RUNNER:-jest}
+coverage_threshold = ${COVERAGE_MIN:-80}
+
+[lint]
+tool = eslint
+fail_on_warning = ${LINT_STRICT:-false}

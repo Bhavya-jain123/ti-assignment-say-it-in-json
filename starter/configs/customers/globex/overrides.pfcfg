@@ -1,0 +1,15 @@
+# Globex — non-production overrides
+@include_once ../../_base/defaults.pfcfg
+
+[build]
+parallel = true
+timeout_minutes = 30
+
+[cache]
+enabled = false
+
+[notify]
+on_failure = log
+
+[deploy]
+requires_approval = false

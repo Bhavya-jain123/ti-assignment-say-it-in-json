@@ -1,0 +1,27 @@
+# Container publish template — extends node build
+
+@include node-build.pfcfg
+
+[template]
+name = container-publish
+extends = node-build
+
+[container]
+registry = ${CONTAINER_REGISTRY:-registry.example.invalid}
+repository = ${CONTAINER_REPO:-app}
+tag = ${GIT_SHA:-latest}
+dockerfile = ${DOCKERFILE:-Dockerfile}
+
+[container.build]
+context = .
+platforms = ${BUILD_PLATFORMS:-linux/amd64}
+push = false
+
+@ifdef CI
+[container.build]
+push = true
+@endif
+
+[deploy]
+strategy = rolling
+requires_approval = ${DEPLOY_APPROVAL:-true}

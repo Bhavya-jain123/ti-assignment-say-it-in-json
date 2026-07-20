@@ -1,0 +1,31 @@
+# Edge case: conditional includes and unmigratable keys
+
+@ifdef FEATURE_BETA
+@include ../templates/node-build.pfcfg
+@endif
+
+@ifndef FEATURE_BETA
+@include ../_base/defaults.pfcfg
+[build]
+steps = legacy-compile,legacy-test
+@endif
+
+[feature]
+beta_enabled = false
+
+@ifdef FEATURE_BETA
+[feature]
+beta_enabled = true
+@endif
+
+[migration]
+; This key references an env var with no default — unmigratable without env
+api_endpoint = ${REQUIRED_API_ENDPOINT}
+; Optional with cross-ref default — order matters
+fallback_endpoint = ${OPTIONAL_API_ENDPOINT:-$(migration.api_endpoint)}
+
+@ifdef MIGRATION_AUDIT
+[audit]
+requested_by = ${MIGRATION_AUDIT_USER:-unknown}
+ticket = ${MIGRATION_AUDIT_TICKET}
+@endif

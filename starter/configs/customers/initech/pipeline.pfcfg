@@ -1,0 +1,21 @@
+# Initech — cross-key references and secrets overlay
+
+@include ../../templates/node-build.pfcfg
+@include secrets.pfcfg
+
+[customer]
+id = initech
+tier = enterprise
+
+[build]
+compiler_path = /usr/local/bin/$(toolchain.default.compiler)
+effective_toolchain = $(toolchain.default.name)
+
+[signing]
+key_id = ${SIGNING_KEY_ID:-initech-default}
+algorithm = ${SIGNING_ALG:-ed25519}
+public_key_url = $(signing.key_id).keys.example.invalid
+
+[release]
+version = ${RELEASE_VERSION:-0.0.0-$(build.node_version)}
+bundle_name = initech-$(release.version).tar.gz

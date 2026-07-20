@@ -1,0 +1,20 @@
+# Notification hooks
+
+[notify]
+on_success = ${NOTIFY_SUCCESS:-log}
+on_failure = ${NOTIFY_FAILURE:-email}
+
+[notify.email]
+recipients = ${BUILD_NOTIFY_LIST:-ops@example.invalid}
+from = pipelineforge-noreply@example.invalid
+
+[notify.slack]
+@ifdef SLACK_WEBHOOK
+enabled = true
+channel = ${SLACK_CHANNEL:-#builds}
+@endif
+
+@ifndef SLACK_WEBHOOK
+[notify.slack]
+enabled = false
+@endif

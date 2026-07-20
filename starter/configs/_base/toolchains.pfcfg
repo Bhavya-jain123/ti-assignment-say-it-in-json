@@ -1,0 +1,19 @@
+# Toolchain definitions — referenced via $(toolchain.*) keys
+
+[toolchain.node]
+version = ${NODE_VERSION:-20}
+binary = node
+package_manager = ${PKG_MGR:-npm}
+install_cmd = ${PKG_MGR:-npm} ci
+
+[toolchain.go]
+version = ${GO_VERSION:-1.22}
+module_mode = on
+
+[toolchain.rust]
+version = ${RUST_VERSION:-stable}
+target = ${RUST_TARGET:-x86_64-unknown-linux-gnu}
+
+[toolchain.default]
+name = node
+compiler = $(toolchain.node.binary)

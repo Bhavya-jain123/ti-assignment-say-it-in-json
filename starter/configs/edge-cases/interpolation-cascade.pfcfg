@@ -1,0 +1,20 @@
+# Edge case: interpolation cascade — order-sensitive expansion
+
+@include ../_base/defaults.pfcfg
+
+[cascade]
+alpha = ${CASCADE_ALPHA:-unset}
+beta = prefix-$(cascade.alpha)-suffix
+gamma = ${CASCADE_GAMMA:-$(cascade.beta)}
+delta = ${CASCADE_DELTA:-$(cascade.gamma)-final}
+epsilon = local-$(cascade.delta)
+
+@ifdef CI
+[cascade]
+epsilon = ci-$(cascade.delta)
+@endif
+
+[cascade.loop]
+; Genuine circular reference — must be reported as an error, not looped forever
+a = $(cascade.loop.b)
+b = $(cascade.loop.a)

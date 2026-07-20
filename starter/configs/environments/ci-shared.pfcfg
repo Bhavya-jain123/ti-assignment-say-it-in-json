@@ -1,0 +1,16 @@
+# Shared CI environment overlay
+
+@ifdef CI
+[build]
+parallel = true
+retry_count = 0
+
+[cache]
+key_prefix = ci-${CACHE_NAMESPACE:-shared}
+
+[artifacts]
+retention_days = 7
+
+[notify]
+on_failure = email,slack
+@endif

@@ -1,0 +1,25 @@
+# Acme Corp — primary pipeline entry config
+
+@include ../../templates/container-publish.pfcfg
+@include staging.pfcfg
+
+[customer]
+id = acme-corp
+tier = enterprise
+
+[build]
+timeout_minutes = 90
+parallel = true
+
+[container]
+repository = acme-portal
+tag = ${ACME_RELEASE_TAG:-$(build.node_version)-${GIT_SHA:-dev}}
+
+[deploy]
+target = ${ACME_DEPLOY_TARGET:-staging}
+requires_approval = true
+
+@ifdef ACME_DEPLOY_TARGET
+[deploy]
+requires_approval = false
+@endif
