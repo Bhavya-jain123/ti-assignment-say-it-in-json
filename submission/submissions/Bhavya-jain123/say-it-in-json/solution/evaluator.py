@@ -219,17 +219,199 @@ def evaluate_json(json_path, env=None):
     return flatten_config(resolved)
 
 
-def evaluate_legacy(path, env=None):
+def evaluate_legacy(path, env=None, included_files=None):
     """
-    Placeholder for the legacy evaluator.
+    Evaluate the original .pfcfg configuration.
 
-    The actual legacy evaluator will be connected after
-    the parser/converter behavior is validated.
+    Handles:
+      - sections
+      - key/value pairs
+      - @include
+      - @include_once
+      - @ifdef
+      - @ifndef
+      - @endif
+      - environment interpolation
+      - cross-key interpolation
     """
 
     if env is None:
         env = {}
 
-    raise NotImplementedError(
-        "Legacy evaluator will be implemented next."
+    path = Path(path).resolve()
+
+    if included_files is None:
+        included_files = set()
+
+    # Prevent include loops.
+    if path in included_files:
+        return {}
+
+    included_files.add(path)
+
+    config = {}
+
+    current_section = None
+    condition_stack = [True]
+
+    with path.open("r", encoding="utf-8") as file:
+        lines = file.readlines()
+
+    for line_number, raw_line in enumerate(lines, start=1):
+
+        line = raw_line.strip()
+
+        # Ignore blank lines.
+        if not line:
+            continue
+
+        # Ignore comments.
+        if line.startswith("#") or line.startswith(";"):
+            continue
+
+        # ---------------------------------------------------------
+        # CONDITIONALS
+        # ---------------------------------------------------------
+
+        match = re.match(
+            r"^@(ifdef|ifndef)\s+([A-Za-z_][A-Za-z0-9_]*)$",
+            line
+        )
+
+        if match:
+            condition_type = match.group(1)
+            variable = match.group(2)
+
+            value = env.get(variable)
+
+            if condition_type == "ifdef":
+                condition = is_truthy(value)
+            else:
+                condition = not is_truthy(value)
+
+            # Nested conditions only work if the parent is active.
+            condition_stack.append(
+                condition_stack[-1] and condition
+            )
+
+            continue
+
+        if line == "@endif":
+            if len(condition_stack) == 1:
+                raise EvaluationError(
+                    f"{path}:{line_number}: unexpected @endif"
+                )
+
+            condition_stack.pop()
+            continue
+
+        # If a conditional block is inactive, ignore everything
+        # inside it except nested conditional directives.
+        if not condition_stack[-1]:
+            continue
+
+        # ---------------------------------------------------------
+        # INCLUDE
+        # ---------------------------------------------------------
+
+        include_match = re.match(
+            r"^@include(_once)?\s+(.+)$",
+            line
+        )
+
+        if include_match:
+
+            once = include_match.group(1) == "_once"
+            include_path = include_match.group(2).strip()
+
+            include_file = (
+                path.parent / include_path
+            ).resolve()
+
+            if not include_file.exists():
+                raise EvaluationError(
+                    f"{path}:{line_number}: "
+                    f"include not found: {include_path}"
+                )
+
+            if once and include_file in included_files:
+                continue
+
+            included_config = evaluate_legacy(
+                include_file,
+                env,
+                included_files
+            )
+
+            for section, values in included_config.items():
+
+                if section not in config:
+                    config[section] = {}
+
+                config[section].update(values)
+
+            continue
+
+        # ---------------------------------------------------------
+        # SECTION
+        # ---------------------------------------------------------
+
+        section_match = re.match(
+            r"^\[([^\]]+)\]$",
+            line
+        )
+
+        if section_match:
+
+            current_section = section_match.group(1).strip()
+
+            if current_section not in config:
+                config[current_section] = {}
+
+            continue
+
+        # ---------------------------------------------------------
+        # KEY = VALUE
+        # ---------------------------------------------------------
+
+        key_match = re.match(
+            r"^([^=]+?)\s*=\s*(.*)$",
+            line
+        )
+
+        if key_match:
+
+            if current_section is None:
+                raise EvaluationError(
+                    f"{path}:{line_number}: "
+                    "key found before section"
+                )
+
+            key = key_match.group(1).strip()
+            value = parse_value(
+                key_match.group(2)
+            )
+
+            config[current_section][key] = value
+
+            continue
+
+        raise EvaluationError(
+            f"{path}:{line_number}: "
+            f"unsupported syntax: {line}"
+        )
+
+    if len(condition_stack) != 1:
+        raise EvaluationError(
+            f"{path}: missing @endif"
+        )
+
+    # Resolve interpolation only after all files have
+    # been combined.
+    resolved = resolve_value(
+        config,
+        config,
+        env
     )
+
+    return config
