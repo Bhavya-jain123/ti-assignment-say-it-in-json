@@ -1,1 +1,59 @@
-
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Say It in JSON Configuration",
+  "type": "object",
+  "required": ["version", "sections"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1
+    },
+    "includes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "once"],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "once": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "sections": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "conditionals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "variable", "sections"],
+        "properties": {
+          "type": {
+            "enum": ["ifdef", "ifndef"]
+          },
+          "variable": {
+            "type": "string"
+          },
+          "sections": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
